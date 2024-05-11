@@ -6,7 +6,7 @@ from ridge_utils.textgrid import TextGrid
 
 def load_textgrids(stories):
     """ TODO (shailee): Add description."""
-    base = "TextGrid/grids"
+    base = "./Stimuli/Subset-Moth-Radio/TextGrid/grids"
     grids = {}
     for story in stories:
         grid_path = os.path.join(base, "%s.TextGrid"%story)
@@ -85,7 +85,7 @@ def load_simulated_trfiles(respdict, tr=2.0, start_time=10.0, pad=5):
         trdict[story] = [trf]
     return trdict
 
-def load_generic_trfiles(stories, root="TextGrid/trfiles"):
+def load_generic_trfiles(stories, root="Stimuli/Subset-Moth-Radio/TextGrid/trfiles"):
     """Loads a dictionary of generic TRFiles (i.e. not specifically from the session
     in which the data was collected.. this should be fine) for the given stories.
     """
