@@ -16,11 +16,33 @@ from ridge_utils.npp import zscore
 import pickle
 logging.basicConfig(level=logging.DEBUG)
 
+def load_subject_fMRI(subject, modality):
+    fdir = './data/'
+    fname_tr5 = os.path.join(fdir, 'subject{}_{}_fmri_data_trn.hdf'.format(subject, modality))
+    print(fname_tr5)
+    trndata5 = utils1.load_data(fname_tr5)
+    print(trndata5.keys())
+
+    fname_te5 = os.path.join(fdir, 'subject{}_{}_fmri_data_val.hdf'.format(subject, modality))
+    tstdata5 = utils1.load_data(fname_te5)
+    print(tstdata5.keys())
+    
+    trim = 5
+    zRresp = np.vstack([zscore(trndata5[story][5+trim:-trim-5]) for story in trndata5.keys()])
+    zPresp = np.vstack([zscore(tstdata5[story][0][5+trim:-trim-5]) for story in tstdata5.keys()])
+    
+    return zRresp, zPresp
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = "CheXpert NN argparser")
+    parser.add_argument("subjectNum", help="Choose subject", type = int)
     parser.add_argument("featurename", help="Choose feature", type = str)
+    parser.add_argument("modality", help="Choose modality", type = str)
+    parser.add_argument("dirname", help="Choose Directory", type = str)
+    parser.add_argument("numlayers", help="Number of Layers", type = int)
     args = parser.parse_args()
     stimul_features = np.load(args.featurename, allow_pickle=True)
+    num_layers = args.numlayers
     print(stimul_features.item().keys())
     Rstories = ['alternateithicatom', 'avatar', 'howtodraw', 'legacy',
             'life', 'myfirstdaywiththeyankees', 'naked',
@@ -54,11 +76,11 @@ if __name__ == "__main__":
     Pstim = {}
     for eachlayer in [8]:
         Rstim[eachlayer] = []
-        Rstim[eachlayer].append(np.vstack([zscore(downsampled_stimuli[story][0][5+trim:-trim]) for story in Rstories]))
+        Rstim[eachlayer].append(np.vstack([zscore(downsampled_stimuli[story][eachlayer][5+trim:-trim]) for story in Rstories]))
 
     for eachlayer in [8]:
         Pstim[eachlayer] = []
-        Pstim[eachlayer].append(np.vstack([zscore(downsampled_stimuli[story][0][5+trim:-trim]) for story in Pstories]))
+        Pstim[eachlayer].append(np.vstack([zscore(downsampled_stimuli[story][eachlayer][5+trim:-trim]) for story in Pstories]))
     storylens = [len(downsampled_stimuli[story][0][5+trim:-trim]) for story in Rstories]
     print(storylens)
 
@@ -79,10 +101,15 @@ if __name__ == "__main__":
     # Print the sizes of these matrices
     print ("delRstim shape: ", delRstim[0].shape)
     print ("delPstim shape: ", delPstim[0].shape)
-    colab_dict = {"delRstim":delRstim, "delPstim":delPstim}
-    with open('./Stimuli/delayed_stim.pickle', 'wb') as pickle_file:
+    trim = 5
+    subject = '0'+str(args.subjectNum)
+    zRresp, zPresp = load_subject_fMRI(subject, args.modality)
+    colab_dict = {"delRstim":delRstim, "delPstim":delPstim, "zRresp":zRresp, "zPresp": zPresp}
+    final_data_file = os.path.join('stim_', subject, args.modality, 'colab_'+subject +'_' +args.modality+'.pickle') 
+    with open(final_data_file, 'wb') as pickle_file:
             pickle.dump(colab_dict, pickle_file)
     
+
 
 
 
